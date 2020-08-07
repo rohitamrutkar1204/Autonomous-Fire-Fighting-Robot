@@ -1,0 +1,90 @@
+#include <SPI.h>
+#include <MFRC522.h>
+#define m1 6
+#define m2 7
+#define SS_PIN 10
+#define RST_PIN 9
+int count_down=0;
+int rpm=0;
+MFRC522 mfrc522(SS_PIN, RST_PIN);   // Create MFRC522 instance.
+ 
+void setup() 
+{
+  Serial.begin(9600);   // Initiate a serial communication
+  SPI.begin();      // Initiate  SPI bus
+  mfrc522.PCD_Init();   // Initiate MFRC522
+  Serial.println(".......READY TO WORK.......");
+  Serial.println();
+  pinMode(m1,OUTPUT);
+  pinMode(m2,OUTPUT);
+}
+void loop() 
+{
+  forward();
+  // Look for new cards
+  if ( ! mfrc522.PICC_IsNewCardPresent()) 
+  {
+    return;
+  }
+  // Select one of the cards
+  if ( ! mfrc522.PICC_ReadCardSerial()) 
+  {
+    return;
+  }
+  //Show UID on serial monitor
+  Serial.print("UID tag :");
+  String content= "";
+  byte letter;
+  for (byte i = 0; i < mfrc522.uid.size; i++) // reading uid tag
+  {
+     Serial.print(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " ");
+     Serial.print(mfrc522.uid.uidByte[i], HEX);
+     content.concat(String(mfrc522.uid.uidByte[i] < 0x10 ? " 0" : " "));
+     content.concat(String(mfrc522.uid.uidByte[i], HEX));
+  }
+  Serial.println();
+  Serial.print("Message : ");
+  {
+    Serial.println("Reduce the speed of vehicle ");  //  07 9F BB will stop the vehicle and F5 10 6D 45 will reduce speed of vehicle
+    for(count_down=3;count_down>=0;count_down--)
+    {
+        Serial.print("COUNT DOWN");
+        Serial.println(count_down);
+        delay(1000);  
+    }
+    for(rpm=100;rpm>=0;rpm--)
+    {
+    reduce();
+    Serial.println(rpm);
+    }
+    Serial.println("Reduced speed");
+    delay(10);
+  } 
+ else   {
+    Serial.println(" Access denied");
+    delay(3000);
+  }
+} 
+void forward()
+{
+  Serial.println("Forward");
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,HIGH);
+  
+}
+void stopp()
+{
+  Serial.println("......STOP.......");
+  digitalWrite(m1,LOW);
+  digitalWrite(m2,LOW);
+  delay(10000);
+}
+void reduce()
+{
+      digitalWrite(m1,HIGH);
+      digitalWrite(m2,LOW);
+      delay(10); 
+      digitalWrite(m1,LOW);
+      digitalWrite(m2,LOW);
+      delay(10);
+}
